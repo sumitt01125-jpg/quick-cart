@@ -10,7 +10,6 @@ import swaggerUi from "swagger-ui-express";
 import { connectRedis } from "./src/config/redis.js";
 import { logger } from "./src/utils/logger.js";
 import { swaggerSpec } from "./src/config/swagger.js";
-
 import { apiRateLimiter } from "./src/middlewares/rateLimit.middleware.js";
 import { errorMiddleware } from "./src/middlewares/error.middleware.js";
 
@@ -32,7 +31,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Request Logger
-
 app.use(
     pinoHttp({
         logger,
@@ -40,7 +38,6 @@ app.use(
 );
 
 // Security Middleware
-
 app.use(helmet());
 
 app.use(
@@ -51,17 +48,13 @@ app.use(
 );
 
 // Basic Middleware
-
 app.use(express.json({ limit: "1mb" }));
-
 app.use(cookieParser());
 
 // Global API Rate Limiter
-
 app.use("/api", apiRateLimiter);
 
 // Swagger API Documentation
-
 app.use(
     "/api-docs",
     swaggerUi.serve,
@@ -69,7 +62,6 @@ app.use(
 );
 
 // Routes
-
 app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/admin", adminRoutes);
@@ -84,7 +76,6 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/reorder", reorderRoutes);
 
 // Health Check
-
 app.get("/health", (req, res) => {
     res.status(200).json({
         status: "ok",
@@ -93,13 +84,11 @@ app.get("/health", (req, res) => {
 });
 
 // Root Route
-
 app.get("/", (req, res) => {
     res.end("Quick-Cart API is running on server!!!");
 });
 
 // Test Route
-
 app.post("/users", (req, res) => {
     console.log(req.body);
 
@@ -110,22 +99,25 @@ app.post("/users", (req, res) => {
 });
 
 // Test Error Route
-
 app.get("/test-error", (req, res, next) => {
     const error = new Error("Something went wrong");
-
     next(error);
 });
 
 // Centralized Error Middleware
-
 app.use(errorMiddleware);
 
 // Start Server
-
 const startServer = async () => {
     try {
-        await connectRedis();
+        try {
+            await connectRedis();
+        } catch (error) {
+            logger.warn(
+                { err: error },
+                "Redis unavailable. Continuing without Redis."
+            );
+        }
 
         app.listen(PORT, () => {
             logger.info(
@@ -134,7 +126,6 @@ const startServer = async () => {
         });
     } catch (error) {
         logger.error(error, "Failed to start server");
-
         process.exit(1);
     }
 };

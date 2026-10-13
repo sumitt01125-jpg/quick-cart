@@ -1,32 +1,65 @@
 import { redisClient } from "../config/redis.js";
 
 export const getCache = async (key) => {
-    const data = await redisClient.get(key);
+    try {
+        if (!redisClient.isReady) {
+            return null;
+        }
 
-    if (!data) {
+        const data = await redisClient.get(key);
+
+        if (!data) {
+            return null;
+        }
+
+        return JSON.parse(data);
+    } catch (error) {
+        console.warn("Redis cache read failed:", error.message);
         return null;
     }
-
-    return JSON.parse(data);
 };
 
 export const setCache = async (key, data, ttl = 300) => {
-    await redisClient.set(key, JSON.stringify(data), {
-        EX: ttl,
-    });
+    try {
+        if (!redisClient.isReady) {
+            return;
+        }
+
+        await redisClient.set(key, JSON.stringify(data), {
+            EX: ttl,
+        });
+    } catch (error) {
+        console.warn("Redis cache write failed:", error.message);
+    }
 };
 
 export const deleteCache = async (key) => {
-    await redisClient.del(key);
+    try {
+        if (!redisClient.isReady) {
+            return;
+        }
+
+        await redisClient.del(key);
+    } catch (error) {
+        console.warn("Redis cache deletion failed:", error.message);
+    }
 };
 
 export const deleteCachePattern = async (pattern) => {
-    for await (const keys of redisClient.scanIterator({
-        MATCH: pattern,
-        COUNT: 100,
-    })) {
-        if (keys.length > 0) {
-            await redisClient.del(keys);
+    try {
+        if (!redisClient.isReady) {
+            return;
         }
+
+        for await (const keys of redisClient.scanIterator({
+            MATCH: pattern,
+            COUNT: 100,
+        })) {
+            if (keys.length > 0) {
+                await redisClient.del(keys);
+            }
+        }
+    } catch (error) {
+        console.warn("Redis cache invalidation failed:", error.message);
     }
 };
