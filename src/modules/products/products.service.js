@@ -1,8 +1,14 @@
 import { db } from "../../prisma/db.js";
 
-import { getCache, setCache, deleteCachePattern, } from "../../utils/cache.js";
+import {
+    getCache,
+    setCache,
+    deleteCachePattern,
+} from "../../utils/cache.js";
+
 
 export const createProduct = async (productData) => {
+
     const category = await db.orm.public.Category
         .where({
             id: productData.categoryId,
@@ -19,6 +25,7 @@ export const createProduct = async (productData) => {
         name: productData.name,
         price: productData.price,
         description: productData.description,
+        imageUrl: productData.imageUrl,
         categoryId: productData.categoryId,
     });
 
@@ -28,6 +35,7 @@ export const createProduct = async (productData) => {
     return product;
 };
 
+
 export const getProducts = async ({
     page = 1,
     limit = 10,
@@ -35,6 +43,7 @@ export const getProducts = async ({
     categoryId,
     sort = "newest",
 }) => {
+
     page = Number(page);
     limit = Number(limit);
 
@@ -53,7 +62,6 @@ export const getProducts = async ({
 
     if (cachedProducts) {
         console.log("Products served from Redis cache");
-
         return cachedProducts;
     }
 
@@ -105,7 +113,9 @@ export const getProducts = async ({
     return result;
 };
 
+
 export const getProductById = async (productId) => {
+
     const product = await db.orm.public.Product
         .where({
             id: productId,
@@ -121,7 +131,9 @@ export const getProductById = async (productId) => {
     return product;
 };
 
+
 export const updateProduct = async (productId, productData) => {
+
     const existingProduct = await db.orm.public.Product
         .where({
             id: productId,
@@ -135,6 +147,7 @@ export const updateProduct = async (productId, productData) => {
     }
 
     if (productData.categoryId) {
+
         const category = await db.orm.public.Category
             .where({
                 id: productData.categoryId,
@@ -160,7 +173,9 @@ export const updateProduct = async (productId, productData) => {
     return updatedProduct;
 };
 
+
 export const deleteProduct = async (productId) => {
+
     const product = await db.orm.public.Product
         .where({
             id: productId,

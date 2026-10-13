@@ -1,9 +1,18 @@
 import { Router } from "express";
 
-import { checkout, getOrders, getOrderById, updateOrderStatus,
-  cancelOrder,} from "./order.controller.js";
+import {
+    checkout,
+    getOrders,
+    getAllOrders,
+    getOrderById,
+    updateOrderStatus,
+    cancelOrder,
+} from "./order.controller.js";
 
-import { checkoutSchema, updateOrderStatusSchema } from "./order.schema.js";
+import {
+    checkoutSchema,
+    updateOrderStatusSchema,
+} from "./order.schema.js";
 
 import { authenticate } from "../../middlewares/auth.middleware.js";
 import { authorize } from "../../middlewares/authorize.middleware.js";
@@ -13,40 +22,48 @@ const router = Router();
 
 // Checkout
 router.post(
-  "/checkout",
-  authenticate,
-  validate(checkoutSchema),
-  checkout
+    "/checkout",
+    authenticate,
+    validate(checkoutSchema),
+    checkout
 );
 
 // Customer order history
 router.get(
-  "/",
-  authenticate,
-  getOrders
+    "/",
+    authenticate,
+    getOrders
+);
+
+// Admin: all customer orders
+router.get(
+    "/admin",
+    authenticate,
+    authorize("ADMIN"),
+    getAllOrders
 );
 
 // Customer order details
 router.get(
-  "/:id",
-  authenticate,
-  getOrderById
+    "/:id",
+    authenticate,
+    getOrderById
 );
 
 // Admin order status update
 router.patch(
-  "/:id/status",
-  authenticate,
-  authorize("ADMIN"),
-  validate(updateOrderStatusSchema),
-  updateOrderStatus
+    "/:id/status",
+    authenticate,
+    authorize("ADMIN"),
+    validate(updateOrderStatusSchema),
+    updateOrderStatus
 );
 
 // Customer cancellation
 router.post(
-  "/:id/cancel",
-  authenticate,
-  cancelOrder
+    "/:id/cancel",
+    authenticate,
+    cancelOrder
 );
 
 export default router;
