@@ -12,6 +12,7 @@ import { logger } from "./src/utils/logger.js";
 import { swaggerSpec } from "./src/config/swagger.js";
 import { apiRateLimiter } from "./src/middlewares/rateLimit.middleware.js";
 import { errorMiddleware } from "./src/middlewares/error.middleware.js";
+import { db } from "./src/prisma/db.js";
 
 import authRoutes from "./src/modules/auth/auth.routes.js";
 import usersRoutes from "./src/modules/users/users.routes.js";
@@ -27,6 +28,7 @@ import wishlistRoutes from "./src/modules/wishlist/wishlist.routes.js";
 import reorderRoutes from "./src/modules/reorder/reorder.routes.js";
 
 const app = express();
+
 app.set("trust proxy", 1);
 
 const PORT = process.env.PORT || 3000;
@@ -43,7 +45,7 @@ app.use(helmet());
 
 app.use(
     cors({
-        origin: process.env.CLIENT_URL || "http://localhost:3001",
+        origin: process.env.CLIENT_URL || "http://localhost:5173",
         credentials: true,
     })
 );
@@ -76,17 +78,33 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/reorder", reorderRoutes);
 
-// Health Check
-app.get("/health", (req, res) => {
-    res.status(200).json({
-        status: "ok",
-        message: "Quick-Cart API is Healthy",
-    });
+// Database Health Check
+app.get("/health", async (req, res) => {
+    try {
+        await db.$queryRaw`SELECT 1`;
+
+        return res.status(200).json({
+            status: "ok",
+            api: "connected",
+            database: "connected",
+        });
+    } catch (error) {
+        logger.error(
+            { err: error },
+            "Database health check failed"
+        );
+
+        return res.status(503).json({
+            status: "error",
+            api: "connected",
+            database: "disconnected",
+        });
+    }
 });
 
 // Root Route
 app.get("/", (req, res) => {
-    res.end("Quick-Cart API is running on server!!!");
+    res.end("Quick-Cart API is running on server!");
 });
 
 // Test Route
